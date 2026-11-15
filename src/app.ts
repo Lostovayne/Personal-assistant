@@ -1,5 +1,14 @@
 import { Hono } from 'hono'
 
+type TelegramUpdate = {
+  message?: {
+    chat?: {
+      id?: number
+    }
+    text?: string
+  }
+}
+
 const app = new Hono()
 
 app.get('/', (c) => {
@@ -8,6 +17,57 @@ app.get('/', (c) => {
 
 app.get('/marco', (c) => {
   return c.text('polo')
+})
+
+app.post('/telegram/webhook', async (c) => {
+  const token = process.env.TELEGRAM_BOT_TOKEN
+  const secret = process.env.TELEGRAM_WEBHOOK_SECRET
+
+  if (!token || !secret) {
+    console.error('TELEGRAM_BOT_TOKEN and TELEGRAM_WEBHOOK_SECRET must be set')
+    return c.text('Telegram is not configured', 500)
+  }
+
+  if (c.req.header('X-Telegram-Bot-Api-Secret-Token') !== secret) {
+    return c.text('Unauthorized', 401)
+  }
+
+  let update: TelegramUpdate | null
+  try {
+    update = await c.req.json<TelegramUpdate | null>()
+  } catch {
+    return c.text('Bad Request', 400)
+  }
+
+  const text = update?.message?.text
+  const chatId = update?.message?.chat?.id
+
+  if (typeof text !== 'string' || text.length === 0 || typeof chatId !== 'number') {
+    return c.text('OK')
+  }
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+      }),
+    })
+
+    if (!response.ok) {
+      console.error(`sendMessage failed with status ${response.status}`)
+      return c.text('Failed to echo message', 502)
+    }
+  } catch (error) {
+    console.error(`sendMessage request failed: ${error instanceof Error ? error.message : String(error)}`)
+    return c.text('Failed to echo message', 502)
+  }
+
+  return c.text('OK')
 })
 
 export default app
