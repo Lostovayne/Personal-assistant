@@ -11,9 +11,6 @@
 # deps
 node_modules/
 
-# keep the lockfile committed
-!package-lock.json
-
 # build output
 dist/
 
