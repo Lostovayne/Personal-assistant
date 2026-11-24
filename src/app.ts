@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
-import { generateText, gateway } from 'ai'
+import { createOpenAI } from '@ai-sdk/openai'
+import { generateText } from 'ai'
 
 type TelegramUpdate = {
   message?: {
@@ -11,6 +12,11 @@ type TelegramUpdate = {
 }
 
 const app = new Hono()
+
+const openai = createOpenAI({
+  baseURL: process.env.KODECLOUD_BASE_URL ?? 'https://api.ai.kodekloud.com/v1',
+  apiKey: process.env.KODEKLOUD_API_KEY,
+})
 
 app.get('/', (c) => {
   return c.text('Hello Hono!')
@@ -50,7 +56,7 @@ app.post('/telegram/webhook', async (c) => {
   let aiText: string
   try {
     const result = await generateText({
-      model: gateway(process.env.AI_MODEL ?? 'anthropic/claude-sonnet-5.5'),
+      model: openai(process.env.KODECLOUD_MODEL ?? 'tencent/hy4-flash'),
       prompt: text,
     })
     aiText = result.text

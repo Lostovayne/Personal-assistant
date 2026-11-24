@@ -17,9 +17,10 @@ curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
   -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
 ```
 
-The bot generates an AI reply for any text message through the Vercel AI Gateway (AI SDK v7). Configure:
+The bot generates an AI reply for any text message through the KODEKLOUD OpenAI-compatible endpoint (AI SDK v7, `@ai-sdk/openai`). Configure:
 
-- `AI_GATEWAY_API_KEY`: Vercel AI Gateway key.
-- `AI_MODEL`: model string (e.g. `anthropic/claude-sonnet-5.5`). Defaults to `anthropic/claude-sonnet-5.5`.
+- `KODEKLOUD_API_KEY`: KODEKLOUD API key.
+- `KODEKLOUD_BASE_URL`: default `https://api.ai.kodekloud.com/v1`.
+- `KODEKLOUD_MODEL`: default `tencent/hy4-flash`.
 
 Requests without the matching `X-Telegram-Bot-Api-Secret-Token` header are rejected. If AI generation fails, the handler responds `502`.
