@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { generateText, gateway } from 'ai'
 
 type TelegramUpdate = {
   message?: {
@@ -46,6 +47,18 @@ app.post('/telegram/webhook', async (c) => {
     return c.text('OK')
   }
 
+  let aiText: string
+  try {
+    const result = await generateText({
+      model: gateway(process.env.AI_MODEL ?? 'anthropic/claude-sonnet-5.5'),
+      prompt: text,
+    })
+    aiText = result.text
+  } catch (error) {
+    console.error(`AI generation failed: ${error instanceof Error ? error.message : String(error)}`)
+    return c.text('Failed to generate AI response', 502)
+  }
+
   try {
     const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
@@ -54,17 +67,17 @@ app.post('/telegram/webhook', async (c) => {
       },
       body: JSON.stringify({
         chat_id: chatId,
-        text,
+        text: aiText,
       }),
     })
 
     if (!response.ok) {
       console.error(`sendMessage failed with status ${response.status}`)
-      return c.text('Failed to echo message', 502)
+      return c.text('Failed to send AI response', 502)
     }
   } catch (error) {
     console.error(`sendMessage request failed: ${error instanceof Error ? error.message : String(error)}`)
-    return c.text('Failed to echo message', 502)
+    return c.text('Failed to send AI response', 502)
   }
 
   return c.text('OK')
