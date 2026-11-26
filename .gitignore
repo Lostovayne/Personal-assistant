@@ -36,3 +36,5 @@ package-lock.json
 .commandcode/
 Microsoft/Windows/PowerShell/ModuleAnalysisCache
 .neon
+
+.trigger
